@@ -13,7 +13,7 @@ img1_true_result = [1 if i == 292 else 0 for i in range(1000)]  # 1-hot result f
 
 batch1 = img1.reshape((1, 224, 224, 3))
 
-pdb.set_trace()
+#pdb.set_trace()
 
 with tf.device('/gpu:0'):
     sess = tf.Session()

@@ -1,5 +1,4 @@
 import tensorflow as tf
-
 import numpy as np
 from functools import reduce
 
@@ -74,7 +73,33 @@ class Vgg19:
         if train_mode is not None:
             self.relu6 = tf.cond(train_mode, lambda: tf.nn.dropout(self.relu6, self.dropout), lambda: self.relu6)
         elif self.trainable:
-            self.relu6 = tf.nn.dropout(self.relu6, self.dropout)
+            self.relu6 = tf.nn.dropout(self.relu6, self.dropout)        
+
+        self.fc7 = self.fc_layer(self.fc6, 4096, 12544, "fc7_1") #12544 = 512*7*7/2
+        self.tn5_7 = self.conv_layer(self.pool5, 512, 256, "tn5_7_1")
+        self.conv7 = self.concat(self.fc7, self.tn5_7, "conv7")
+        self.upool7 = self.un_pool(self.conv7, "upool7")
+        
+        self.conv8_1 = self.conv_layer(self.upool7, 512, 256, "conv8_1")
+        self.tn4_8 = self.conv_layer(self.pool4, 512, 256, "tn4_8")
+        self.conv8_2 = self.concat(self.conv8_1, self.tn4_8, "conv8_2")
+        self.upool8 = self.un_pool(self.conv8_2, "upool8")
+
+        self.conv9_1 = self.conv_layer(self.upool8, 512, 128, "conv9_1")
+        self.tn3_9 = self.conv_layer(self.pool3, 256, 128, "tn3_9")
+        self.conv9_2 = self.concat(self.conv9_1, self.tn3_9, "conv9_2")
+        self.upool9 = self.un_pool(self.conv9_2, "upool9")
+
+        self.conv10_1 = self.conv_layer(self.upool9, 256, 64, "conv10_1")
+        self.tn2_10 = self.conv_layer(self.pool2, 128, 64, "tn2_10")
+        self.conv10_2 = self.concat(self.conv10_1, self.tn2_10, "conv10_2")
+        self.upool10 = self.un_pool(self.conv10_2, "upool10")
+
+        self.conv11_1 = self.conv_layer(self.upool10, 128, 32, "conv11_1")
+        self.tn1_11 = self.conv_layer(self.pool1, 64, 32, "tn1_11")
+        self.conv11_2 = self.concat(self.conv11_1, self.tn1_11, "conv11_2")
+        self.upool10 = self.un_pool(self.conv11_2, "upool10")
+        
 
         self.fc7 = self.fc_layer(self.relu6, 4096, 4096, "fc7")
         self.relu7 = tf.nn.relu(self.fc7)
@@ -95,6 +120,17 @@ class Vgg19:
     def max_pool(self, bottom, name):
         return tf.nn.max_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name=name)
 
+    def un_pool(self, value, name):
+        with tf.variable_scope(name):
+            sh = value.get_shape().as_list()
+            dim = len(sh[1:-1])
+            out = (tf.reshape(value, [-1] + sh[-dim:]))
+            for i in range(dim, 0, -1):
+                out = tf.concat([out, tf.zeros_like(out)], i)
+            out_size = [-1] + [s * 2 for s in sh[1:-1]] + [sh[-1]]
+            out = tf.reshape(out, out_size, name=name)
+        return out
+
     def conv_layer(self, bottom, in_channels, out_channels, name):
         with tf.variable_scope(name):
             filt, conv_biases = self.get_conv_var(3, in_channels, out_channels, name)
@@ -103,6 +139,24 @@ class Vgg19:
             relu = tf.nn.relu(bias)
 
             return relu
+
+    def concat(self, leftNet, rightNet, name):
+        with tf.variable_scope(name):
+            #TODO assert size are the same
+            #print(leftNet.get_shape())
+            #print(rightNet.get_shape())
+            sameShape = False
+            if (leftNet.shape.rank == rightNet.shape.rank) :
+                sameShape = True
+                for i in range(0,leftNet.shape.rank):
+                    if leftNet.shape.dims[i].value != rightNet.shape.dims[i].value:
+                        sameShape = False
+                        break
+
+            if not sameShape:
+                leftNet = tf.reshape(leftNet, rightNet.get_shape())
+            concat = tf.concat([leftNet,rightNet],3)
+            return concat
 
     def fc_layer(self, bottom, in_size, out_size, name):
         with tf.variable_scope(name):
