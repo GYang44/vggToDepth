@@ -17,7 +17,7 @@ class Vgg19:
             self.data_dict = None
 
         self.var_dict = {}
-        self.trainable = trainable
+        self.trainable = (trainable & False)
         self.dropout = dropout
 
     def build(self, rgb, train_mode=None):
@@ -73,7 +73,9 @@ class Vgg19:
         if train_mode is not None:
             self.relu6 = tf.cond(train_mode, lambda: tf.nn.dropout(self.relu6, self.dropout), lambda: self.relu6)
         elif self.trainable:
-            self.relu6 = tf.nn.dropout(self.relu6, self.dropout)        
+            self.relu6 = tf.nn.dropout(self.relu6, self.dropout) 
+
+        self.trainable = (trainable & True)       
 
         self.fc7_1 = self.fc_layer(self.fc6, 4096, 25088, "fc7_1") #12544 = 512*7*7
         self.fc7_2 = tf.reshape(self.fc7_1, self.pool5.get_shape())
@@ -106,6 +108,8 @@ class Vgg19:
         self.conv11_1 = self.sum(self.conv10_2, self.tn1_11_2, "conv11_1")
         self.upool11 = self.un_pool(self.conv11_1, "upool11")
         self.conv11_2 = self.conv_layer(self.upool11, 3, 64, 3, "conv11_2")        
+
+        self.trainable = (trainable & False)
 
         self.fc7 = self.fc_layer(self.relu6, 4096, 4096, "fc7")
         self.relu7 = tf.nn.relu(self.fc7)
