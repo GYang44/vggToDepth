@@ -17,7 +17,7 @@ class Vgg19:
             self.data_dict = None
 
         self.var_dict = {}
-        self.trainable = (trainable & False)
+        self.trainable = trainable
         self.dropout = dropout
 
     def build(self, rgb, train_mode=None):
@@ -41,6 +41,8 @@ class Vgg19:
             red - VGG_MEAN[2],
         ])
         assert bgr.get_shape().as_list()[1:] == [224, 224, 3]
+
+        self.trainable = (train_mode is not None) & False
 
         self.conv1_1 = self.conv_layer(bgr, 3, 3, 64, "conv1_1")
         self.conv1_2 = self.conv_layer(self.conv1_1, 3, 64, 64, "conv1_2")
@@ -75,7 +77,7 @@ class Vgg19:
         elif self.trainable:
             self.relu6 = tf.nn.dropout(self.relu6, self.dropout) 
 
-        self.trainable = (trainable & True)       
+        self.trainable = (train_mode is not None) & True
 
         self.fc7_1 = self.fc_layer(self.fc6, 4096, 25088, "fc7_1") #12544 = 512*7*7
         self.fc7_2 = tf.reshape(self.fc7_1, self.pool5.get_shape())
@@ -107,10 +109,11 @@ class Vgg19:
         self.tn1_11_2 = self.conv_layer(self.tn1_11_1, 5, 32, 64, "tn1_11_2")
         self.conv11_1 = self.sum(self.conv10_2, self.tn1_11_2, "conv11_1")
         self.upool11 = self.un_pool(self.conv11_1, "upool11")
-        self.conv11_2 = self.conv_layer(self.upool11, 3, 64, 3, "conv11_2")        
+        self.conv11_2 = self.conv_layer(self.upool11, 3, 64, 3, "conv11_2")
 
-        self.trainable = (trainable & False)
-
+        self.depth = self.conv_layer(self.conv11_2, 3, 3, 1, "depth")
+        pass
+        """
         self.fc7 = self.fc_layer(self.relu6, 4096, 4096, "fc7")
         self.relu7 = tf.nn.relu(self.fc7)
         if train_mode is not None:
@@ -123,6 +126,7 @@ class Vgg19:
         self.prob = tf.nn.softmax(self.fc8, name="prob")
 
         self.data_dict = None
+        """
 
     def avg_pool(self, bottom, name):
         return tf.nn.avg_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name=name)

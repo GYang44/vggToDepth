@@ -30,11 +30,12 @@ with tf.device('/gpu:0'):
 
     sess.run(tf.global_variables_initializer())
 
-    # test classification
-    prob = sess.run(vgg.prob, feed_dict={images: batch1, train_mode: False})
-    utils.print_prob(prob[0], './synset.txt')
-
+    # test depth
+    depth = sess.run(vgg.depth, feed_dict={images: batch1, train_mode: False})
+    utils.show_image(depth)
+    pass
     # simple 1-step training
+    """
     cost = tf.reduce_sum((vgg.prob - true_out) ** 2)
     train = tf.train.GradientDescentOptimizer(0.0001).minimize(cost)
     sess.run(train, feed_dict={images: batch1, true_out: [img1_true_result], train_mode: True})
@@ -45,3 +46,4 @@ with tf.device('/gpu:0'):
 
     # test save
     vgg.save_npy(sess, './test-save.npy')
+    """

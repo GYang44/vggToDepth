@@ -2,6 +2,7 @@ import skimage
 import skimage.io
 import skimage.transform
 import numpy as np
+import tensorflow as tf
 
 
 # synset = [l.strip() for l in open('synset.txt').readlines()]
@@ -24,6 +25,11 @@ def load_image(path):
     resized_img = skimage.transform.resize(crop_img, (224, 224))
     return resized_img
 
+
+def show_image(image):
+    image = image * 255
+    skimage.io.imshow(image)
+    return
 
 # returns the top1 string
 def print_prob(prob, file_path):
