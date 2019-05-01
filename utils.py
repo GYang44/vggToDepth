@@ -29,6 +29,7 @@ def load_image(path):
 def show_image(image):
     image = image * 255
     skimage.io.imshow(image)
+    skimage.io.show()
     return
 
 # returns the top1 string

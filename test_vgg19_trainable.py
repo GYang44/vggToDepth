@@ -1,8 +1,6 @@
 """
 Simple tester for the vgg19_trainable
 """
-import pdb
-
 import tensorflow as tf
 
 import vgg19_trainable as vgg19
@@ -12,8 +10,6 @@ img1 = utils.load_image("./test_data/tiger.jpeg")
 img1_true_result = [1 if i == 292 else 0 for i in range(1000)]  # 1-hot result for tiger
 
 batch1 = img1.reshape((1, 224, 224, 3))
-
-#pdb.set_trace()
 
 with tf.device('/gpu:0'):
     sess = tf.Session()
@@ -32,7 +28,8 @@ with tf.device('/gpu:0'):
 
     # test depth
     depth = sess.run(vgg.depth, feed_dict={images: batch1, train_mode: False})
-    utils.show_image(depth)
+    print(type(depth))
+    utils.show_image(depth[0].reshape(224,224))
     pass
     # simple 1-step training
     """
