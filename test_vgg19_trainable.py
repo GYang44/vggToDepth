@@ -6,16 +6,14 @@ import tensorflow as tf
 import vgg19_trainable as vgg19
 import utils
 
-img1 = utils.load_image("./test_data/tiger.jpeg")
-img1_true_result = [1 if i == 292 else 0 for i in range(1000)]  # 1-hot result for tiger
-
-batch1 = img1.reshape((1, 224, 224, 3))
+# create list of directory to color inputs and depth outputs
+dataSet = utils.prepareData('D:\Archive\DepthTraining\depthPhoto')
 
 with tf.device('/gpu:0'):
     sess = tf.Session()
 
     images = tf.placeholder(tf.float32, [1, 224, 224, 3])
-    true_out = tf.placeholder(tf.float32, [1, 1000])
+    true_out = tf.placeholder(tf.float32, [1, 224, 224])
     train_mode = tf.placeholder(tf.bool)
 
     vgg = vgg19.Vgg19('./vgg19.npy')
@@ -27,12 +25,30 @@ with tf.device('/gpu:0'):
     sess.run(tf.global_variables_initializer())
 
     # test depth
+    #depth = sess.run(vgg.depth, feed_dict={images: batch1, train_mode: False})
+    #utils.show_image(depth[0].reshape(224,224))
+
+    cost = tf.reduce_sum((vgg.depth - true_out) ** 2)
+    train = tf.train.GradientDescentOptimizer(0.0001).minimize(cost)
+
+    for data in dataSet[:20]:
+        #load input and output image
+        color, depth = data
+        inImage = utils.load_image(color)
+        batch1 = inImage.reshape((1, 224, 224, 3))
+        outImage = utils.load_image(depth, isGray = True)
+        img1_true_result = outImage.reshape((224, 224))
+        sess.run(train, feed_dict={images: batch1, true_out: [img1_true_result], train_mode: True})
+        print(cost,' ', color, ' ', depth, '\n')
+
+
+    #test trining result
+    image = utils.load_image('D:\Archive\DepthTraining\depthPhoto\Player_0_2019-04-16_12-57-29_StereoR.png')
+    batch1 = image.reshape((1,224,224,3))
     depth = sess.run(vgg.depth, feed_dict={images: batch1, train_mode: False})
-    print(type(depth))
     utils.show_image(depth[0].reshape(224,224))
-    pass
-    # simple 1-step training
-    """
+        
+    """    
     cost = tf.reduce_sum((vgg.prob - true_out) ** 2)
     train = tf.train.GradientDescentOptimizer(0.0001).minimize(cost)
     sess.run(train, feed_dict={images: batch1, true_out: [img1_true_result], train_mode: True})

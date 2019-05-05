@@ -1,3 +1,4 @@
+import os
 import skimage
 import skimage.io
 import skimage.transform
@@ -10,9 +11,9 @@ import tensorflow as tf
 
 # returns image of shape [224, 224, 3]
 # [height, width, depth]
-def load_image(path):
+def load_image(path, isGray = False):
     # load image
-    img = skimage.io.imread(path)
+    img = skimage.io.imread(path, as_gray = isGray)
     img = img / 255.0
     assert (0 <= img).all() and (img <= 1.0).all()
     # print "Original Image Shape: ", img.shape
@@ -27,7 +28,6 @@ def load_image(path):
 
 
 def show_image(image):
-    image = image * 255
     skimage.io.imshow(image)
     skimage.io.show()
     return
@@ -74,6 +74,28 @@ def test():
     img = skimage.transform.resize(img, (ny, nx))
     skimage.io.imsave("./test_data/test/output.jpg", img)
 
+def indexTraininData(path):
+    color = []
+    depth = []
+    for r,d,f in os.walk(path):
+        for file in f:
+            if 'StereoL' in file:
+                color.append(os.path.join(r, file))
+            elif 'DepthCamera' in file:
+                depth.append(os.path.join(r, file))
+    assert len(color) > 0 and len(depth) > 0
+    color.sort()
+    depth.sort()
+    return color, depth
 
+def prepareData(path):
+    color, depth = indexTraininData(path)
+    assert len(color) == len(depth)
+    dataSet = [None] * len(color)
+    for i in range(len(color)):
+        dataSet[i] = (color[i], depth[i])
+    return dataSet
+    
+    
 if __name__ == "__main__":
     test()
