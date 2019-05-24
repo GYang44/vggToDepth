@@ -28,7 +28,7 @@ def load_image(path, isGray = False):
 
 
 def show_image(image):
-    skimage.io.imshow(image)
+    skimage.io.imshow(image * 255)
     skimage.io.show()
     return
 
@@ -77,7 +77,7 @@ def test():
 def indexTraininData(path):
     color = []
     depth = []
-    for r,d,f in os.walk(path):
+    for r, _, f in os.walk(path):
         for file in f:
             if 'StereoL' in file:
                 color.append(os.path.join(r, file))

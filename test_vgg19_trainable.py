@@ -7,7 +7,8 @@ import vgg19_trainable as vgg19
 import utils
 
 # create list of directory to color inputs and depth outputs
-dataSet = utils.prepareData('D:\Archive\DepthTraining\depthPhoto')
+dataSet = utils.prepareData('D:\\Archive\\DepthTraining\\depthPhoto')
+#dataSet = utils.prepareData('/media/gyang/INO1/Archive/DepthTraining/depthPhoto')
 
 with tf.device('/gpu:0'):
     sess = tf.Session()
@@ -30,7 +31,7 @@ with tf.device('/gpu:0'):
 
     cost = tf.reduce_sum((vgg.depth - true_out) ** 2)
     train = tf.train.GradientDescentOptimizer(0.0001).minimize(cost)
-
+    
     for data in dataSet[:20]:
         #load input and output image
         color, depth = data
@@ -40,10 +41,11 @@ with tf.device('/gpu:0'):
         img1_true_result = outImage.reshape((224, 224))
         sess.run(train, feed_dict={images: batch1, true_out: [img1_true_result], train_mode: True})
         print(cost,' ', color, ' ', depth, '\n')
-
+    
 
     #test trining result
-    image = utils.load_image('D:\Archive\DepthTraining\depthPhoto\Player_0_2019-04-16_12-57-29_StereoR.png')
+    image = utils.load_image('D:\\Archive\\DepthTraining\\depthPhoto\\Player_0_2019-04-16_12-57-29_StereoR.png')
+    #image = utils.load_image('/media/gyang/INO1/Archive/DepthTraining/depthPhoto/Player_0_2019-04-16_12-57-29_StereoR.png')
     batch1 = image.reshape((1,224,224,3))
     depth = sess.run(vgg.depth, feed_dict={images: batch1, train_mode: False})
     utils.show_image(depth[0].reshape(224,224))

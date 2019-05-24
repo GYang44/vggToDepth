@@ -80,10 +80,10 @@ class Vgg19:
         self.trainable = (train_mode is not None) & True
 
         self.fc7_1 = self.fc_layer(self.fc6, 4096, 25088, "fc7_1") #12544 = 512*7*7
-        self.fc7_2 = tf.reshape(self.fc7_1, self.pool5.get_shape())
+        #self.fc7_2 = tf.reshape(self.fc7_1, self.pool5.get_shape())
         self.tn5_7_1 = self.conv_layer(self.pool5, 3, 512, 256, "tn5_7_1")
         self.tn5_7_2 = self.conv_layer(self.tn5_7_1, 3, 256, 512, "tn5_7_2")
-        self.conv7_1 = self.sum(self.fc7_2, self.tn5_7_2, "conv7_1")
+        self.conv7_1 = self.sum(tf.reshape(self.fc7_1, self.pool5.get_shape()), self.tn5_7_2, "conv7_1")
         self.upool7 = self.un_pool(self.conv7_1, "upool7")        
         self.conv7_2 = self.conv_layer(self.upool7, 3, 512, 512, "conv7_2")
 
