@@ -14,7 +14,7 @@ with tf.device('/gpu:0'):
     sess = tf.Session()
 
     images = tf.placeholder(tf.float32, [1, 224, 224, 3])
-    true_out = tf.placeholder(tf.float32, [1, 224, 224])
+    true_out = tf.placeholder(tf.float32, [1, 224, 224, 1])
     train_mode = tf.placeholder(tf.bool)
 
     vgg = vgg19.Vgg19('./vgg19.npy')
@@ -31,17 +31,24 @@ with tf.device('/gpu:0'):
 
     cost = tf.reduce_sum((vgg.depth - true_out) ** 2)
     train = tf.train.GradientDescentOptimizer(0.0001).minimize(cost)
+    """    
+    image = utils.load_image('D:\\Archive\\DepthTraining\\depthPhoto\\Player_0_2019-04-16_12-57-29_StereoR.png')
+    batch1 = image.reshape((1,224,224,3))
+    """
     
+
     for data in dataSet[:20]:
         #load input and output image
         color, depth = data
         inImage = utils.load_image(color)
         batch1 = inImage.reshape((1, 224, 224, 3))
         outImage = utils.load_image(depth, isGray = True)
-        img1_true_result = outImage.reshape((224, 224))
-        sess.run(train, feed_dict={images: batch1, true_out: [img1_true_result], train_mode: True})
+        img1_true_result = outImage.reshape((1, 224, 224, 1))
+        sess.run(train, feed_dict={images: batch1, true_out: img1_true_result, train_mode: True})
         print(cost,' ', color, ' ', depth, '\n')
-    
+        depth = sess.run(vgg.depth, feed_dict={images: batch1, train_mode: False})
+        utils.show_image(depth[0].reshape(224,224))
+     
 
     #test trining result
     image = utils.load_image('D:\\Archive\\DepthTraining\\depthPhoto\\Player_0_2019-04-16_12-57-29_StereoR.png')
