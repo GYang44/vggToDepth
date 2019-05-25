@@ -29,7 +29,7 @@ with tf.device('/gpu:0'):
     #depth = sess.run(vgg.depth, feed_dict={images: batch1, train_mode: False})
     #utils.show_image(depth[0].reshape(224,224))
 
-    cost = tf.reduce_sum((vgg.depth - true_out) ** 2)
+    cost = tf.losses.mean_squared_error(vgg.depth, true_out)
     train = tf.train.GradientDescentOptimizer(0.0001).minimize(cost)
     """    
     image = utils.load_image('D:\\Archive\\DepthTraining\\depthPhoto\\Player_0_2019-04-16_12-57-29_StereoR.png')
@@ -46,8 +46,6 @@ with tf.device('/gpu:0'):
         img1_true_result = outImage.reshape((1, 224, 224, 1))
         sess.run(train, feed_dict={images: batch1, true_out: img1_true_result, train_mode: True})
         print(cost,' ', color, ' ', depth, '\n')
-        depth = sess.run(vgg.depth, feed_dict={images: batch1, train_mode: False})
-        utils.show_image(depth[0].reshape(224,224))
      
 
     #test trining result
@@ -65,7 +63,6 @@ with tf.device('/gpu:0'):
     # test classification again, should have a higher probability about tiger
     prob = sess.run(vgg.prob, feed_dict={images: batch1, train_mode: False})
     utils.print_prob(prob[0], './synset.txt')
-
+    """
     # test save
     vgg.save_npy(sess, './test-save.npy')
-    """
