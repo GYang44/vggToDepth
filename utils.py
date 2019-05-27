@@ -95,7 +95,8 @@ def prepareData(path):
     for i in range(len(color)):
         dataSet[i] = (color[i], depth[i])
     return dataSet
-    
+
+#TODO batch handler
     
 if __name__ == "__main__":
     test()
