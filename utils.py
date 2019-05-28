@@ -14,7 +14,8 @@ import tensorflow as tf
 def load_image(path, isGray = False):
     # load image
     img = skimage.io.imread(path, as_gray = isGray)
-    img = img / 255.0
+    if not isGray:
+        img = img / 255.0
     assert (0 <= img).all() and (img <= 1.0).all()
     # print "Original Image Shape: ", img.shape
     # we crop image from center
