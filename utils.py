@@ -98,6 +98,14 @@ def prepareData(path):
     return dataSet
 
 #TODO batch handler
+
+def createBatch(dataSet, batchSize, resolution):
+    trainingInput = np.empty((batchSize, resolution[0], resolution[1], 3))
+    trainingOutput = np.empty((batchSize, resolution[0], resolution[1], 1))
+    for i in range(0,batchSize):
+        trainingInput[i] = load_image(dataSet[i][0]).reshape((resolution[0], resolution[1], 3))
+        trainingOutput[i] = load_image(dataSet[i][1], isGray=True).reshape((resolution[0], resolution[1], 1))
+    return trainingInput, trainingOutput
     
 if __name__ == "__main__":
     test()
