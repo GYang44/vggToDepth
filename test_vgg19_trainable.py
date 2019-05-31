@@ -14,16 +14,16 @@ from tensorflow.python.framework import ops
 
 ops.reset_default_graph()
 
-dataSet = utils.prepareData('/media/gyang/INO1/Archive/DepthTraining/depthPhoto')
 # create list of directory to color inputs and depth outputs
 #dataSet = utils.prepareData('D:\\Archive\\DepthTraining\\depthPhoto')
+dataSet = utils.DataHandler('/media/gyang/INO1/Archive/DepthTraining/depthPhoto',10)
 
-batchSize = 10
 cycles = 1000
 isTraining = True
 
 with tf.device('/gpu:0'):
-    sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
+    #sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
+    sess = tf.Session()
     
     images = tf.placeholder(tf.float32, [None, 224, 224, 3])
     true_out = tf.placeholder(tf.float32, [None, 224, 224, 1])
@@ -37,19 +37,19 @@ with tf.device('/gpu:0'):
     sess.run(tf.global_variables_initializer())
 
     cost = tf.losses.mean_squared_error(vgg.depth, true_out)
-    cost_print_op = tf.print("cost: ", cost)
 
-    with tf.control_dependencies([cost_print_op]):
-        train = tf.train.GradientDescentOptimizer(0.01).minimize(cost)
-
-    batch, true_depth = utils.createBatch(dataSet, batchSize, [224,224])
+    train = tf.train.GradientDescentOptimizer(0.01).minimize(cost)
 
     for i in range(0, cycles):
-        #load input and output image
-        sess.run(train, feed_dict={images: batch, true_out: true_depth, train_mode: isTraining})
-        param = sess.run(vgg.var_dict)
-        print('Cycle: ' + str(i) + " mean: " + str(np.mean(param[("conv11_2", 0)])))
-
+        #TODO increase by the size of batch
+        while True:
+            inputImage, true_depth = dataSet.getBatch()
+    
+            #load input and output image
+            _, costValue = sess.run([train, cost], feed_dict={images: inputImage, true_out: true_depth, train_mode: isTraining})
+            param = sess.run(vgg.var_dict)
+            print('Cycle: {}, cost value: {}'.format(i, costValue) )
+            # + str(i) + " mean: " + str(np.mean(param[("conv11_2", 0)])))
     
     #test trining result
     depth = sess.run(vgg.depth, feed_dict={images: batch, train_mode: False})

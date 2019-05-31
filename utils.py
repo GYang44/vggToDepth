@@ -92,12 +92,7 @@ def indexTraininData(path):
 def prepareData(path):
     color, depth = indexTraininData(path)
     assert len(color) == len(depth)
-    dataSet = [None] * len(color)
-    for i in range(len(color)):
-        dataSet[i] = (color[i], depth[i])
-    return dataSet
-
-#TODO batch handler
+    return list(zip(color, depth))
 
 def createBatch(dataSet, batchSize, resolution):
     trainingInput = np.empty((batchSize, resolution[0], resolution[1], 3))
@@ -107,5 +102,21 @@ def createBatch(dataSet, batchSize, resolution):
         trainingOutput[i] = load_image(dataSet[i][1], isGray=True).reshape((resolution[0], resolution[1], 1))
     return trainingInput, trainingOutput
     
+class DataHandler:
+    batchPosition = 0
+    def __init__(self, path, batchSize = 1):
+        self.dataSet = prepareData(path)
+        self.batchSize = batchSize
+
+    def getBatchDir(self):
+        if self.batchPosition + self.batchSize - 1 < len(self.dataSet):
+            self.batchPosition = self.batchPosition + self.batchSize
+            return self.dataSet[self.batchPosition - self.batchSize : self.batchPosition]
+        else:
+            return None
+
+    def getBatch(self):
+        return createBatch(self.getBatchDir(),self.batchSize, [224,224])
+
 if __name__ == "__main__":
     test()
