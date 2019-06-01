@@ -5,7 +5,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import tensorflow as tf
 import sys
 
-from vgg19_trainable import Vgg19
+from DepthNet_MOD import Vgg19
+#from vgg19_trainable import Vgg19
 import utils
 
 import numpy as np
@@ -15,10 +16,11 @@ from tensorflow.python.framework import ops
 ops.reset_default_graph()
 
 # create list of directory to color inputs and depth outputs
-#dataSet = utils.prepareData('D:\\Archive\\DepthTraining\\depthPhoto')
-dataSet = utils.DataHandler('/media/gyang/INO1/Archive/DepthTraining/depthPhoto',10)
 
-cycles = 1000
+#dataSet = utils.DataHandler('/media/gyang/INO1/Archive/DepthTraining/depthPhoto', [224,224], 10)
+dataSet = utils.DataHandler('D:\\Archive\\DepthTraining\\depthPhoto', [224,224], 10)
+
+cycles = 10000
 isTraining = True
 
 with tf.device('/gpu:0'):
@@ -39,22 +41,26 @@ with tf.device('/gpu:0'):
     cost = tf.losses.mean_squared_error(vgg.depth, true_out)
 
     train = tf.train.GradientDescentOptimizer(0.01).minimize(cost)
-
+    costAvg = np.empty([cycles])
     for i in range(0, cycles):
-        #TODO increase by the size of batch
-        while True:
+        dataSet.reBatch()
+        costAvg[i] = 0
+        while dataSet.nextBatch():
             inputImage, true_depth = dataSet.getBatch()
     
             #load input and output image
             _, costValue = sess.run([train, cost], feed_dict={images: inputImage, true_out: true_depth, train_mode: isTraining})
             param = sess.run(vgg.var_dict)
             print('Cycle: {}, cost value: {}'.format(i, costValue) )
-            # + str(i) + " mean: " + str(np.mean(param[("conv11_2", 0)])))
-    
+            costAvg[i] = costAvg[i] + costValue
+        costAvg[i] = costAvg[i]/dataSet.getBatchCount()
+    """
     #test trining result
-    depth = sess.run(vgg.depth, feed_dict={images: batch, train_mode: False})
-    utils.show_image(depth[0].reshape(224,224))
-    
+    depth = sess.run(vgg.depth, feed_dict={images: inputImage, train_mode: False})
+    for i in range(0, inputImage.shape[0]):
+        utils.show_image(depth[i].reshape(224,224))
+    """
+    #np.save('./cost.npy', costAvg)
     # test save
     #vgg.save_npy(sess, './test-save.npy')
     sess.close()
